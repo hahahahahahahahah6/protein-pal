@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protein Pal</title>
+<style>
+  :root {
+    --bg: #111214;
+    --card: #1b1d20;
+    --text: #f2f3f5;
+    --muted: #9aa0a6;
+    --accent: #b6f09c;
+    --accent-dim: #3a4a2e;
+    --danger: #ff8a80;
+    --border: #2a2d31;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex; justify-content: center; padding: 20px 12px 60px;
+  }
+  main { width: 100%; max-width: 480px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  header h1 { font-size: 1.4rem; margin: 0; }
+  header .date { color: var(--muted); font-size: 0.9rem; }
+  .hero {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin: 12px 0; text-align: center;
+  }
+  .hero .total { font-size: 2.6rem; font-weight: 700; }
+  .hero .total small { font-size: 1.1rem; color: var(--muted); font-weight: 400; }
+  .bar { height: 14px; background: #26282c; border-radius: 8px; margin-top: 12px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0%; background: var(--accent); border-radius: 8px; transition: width 0.25s; }
+  .bar.done > div { background: #7ee787; }
+  .goal-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 10px; color: var(--muted); font-size: 0.9rem; }
+  .goal-row button { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+  .goal-row input { width: 70px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 6px; font-size: 1rem; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin: 12px 0; }
+  .card h2 { font-size: 1rem; margin: 0 0 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .add-form { display: flex; flex-wrap: wrap; gap: 8px; }
+  .add-form input[type="text"] { flex: 2 1 140px; }
+  .add-form input[type="number"] { flex: 1 1 70px; }
+  .add-form input {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: 12px; font-size: 1rem; min-height: 44px;
+  }
+  .add-form button {
+    flex: 1 1 100%; background: var(--accent); color: #111; border: none;
+    border-radius: 10px; padding: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; min-height: 44px;
+  }
+  .lactose-check { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.9rem; flex: 1 1 100%; }
+  .lactose-check input { width: 18px; height: 18px; }
+  .error { color: var(--danger); font-size: 0.9rem; margin-top: 8px; min-height: 1.2em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: var(--accent-dim); border: 1px solid var(--border); color: var(--text);
+    border-radius: 20px; padding: 8px 14px; cursor: pointer; font-size: 0.9rem; min-height: 44px;
+  }
+  .chip small { color: var(--muted); }
+  .hint { color: var(--muted); font-size: 0.9rem; }
+  .entry { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .entry:last-child { border-bottom: none; }
+  .entry .grams { font-weight: 700; margin-left: 8px; white-space: nowrap; }
+  .badge { background: #4a3a1e; color: #ffd97a; font-size: 0.75rem; border-radius: 6px; padding: 2px 6px; margin-left: 8px; }
+  .del { background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 8px; }
+  .del:hover { color: var(--danger); }
+  details { border-bottom: 1px solid var(--border); padding: 8px 0; }
+  details:last-child { border-bottom: none; }
+  summary { cursor: pointer; display: flex; justify-content: space-between; padding: 4px 0; }
+  summary .day-total { font-weight: 700; }
+  .notice { background: #4a3a1e; color: #ffd97a; border-radius: 10px; padding: 10px 14px; margin: 12px 0; font-size: 0.9rem; display: none; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🥩 Protein Pal</h1>
+    <span class="date" id="date"></span>
+  </header>
+
+  <div class="notice" id="notice"></div>
+
+  <section class="hero">
+    <div class="total"><span id="total">0</span><small> / <span id="goalDisplay">180</span>g</small></div>
+    <div class="bar" id="bar"><div id="barFill"></div></div>
+    <div class="goal-row">
+      <span>Daily goal:</span>
+      <span id="goalView"><span id="goalVal">180</span>g <button id="editGoal">edit</button></span>
+      <span id="goalEdit" style="display:none">
+        <input type="number" id="goalInput" min="1" step="1"> <button id="saveGoal">save</button>
+      </span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Log food</h2>
+    <div class="add-form">
+      <input type="text" id="foodName" placeholder="e.g. chicken breast" autocomplete="off">
+      <input type="number" id="foodGrams" placeholder="grams" min="1" step="any" inputmode="decimal">
+      <label class="lactose-check"><input type="checkbox" id="foodLactose"> contains lactose/dairy</label>
+      <button id="addBtn">Add</button>
+    </div>
+    <div class="error" id="error"></div>
+  </section>
+
+  <section class="card">
+    <h2>Recents — tap to re-add</h2>
+    <div class="chips" id="recents"></div>
+  </section>
+
+  <section class="card">
+    <h2>Today's log</h2>
+    <div id="todayLog"></div>
+  </section>
+
+  <section class="card">
+    <h2>History</h2>
+    <div id="history"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var KEY = "proteinpal.v1";
+  var state = { goal: 180, days: {} };
+  var storageOK = true;
+
+  function todayKey(d) {
+    d = d || new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+
+  function notice(msg) {
+    var el = document.getElementById("notice");
+    el.textContent = msg;
+    el.style.display = "block";
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.goal === "number" && parsed.days) state = parsed;
+      }
+    } catch (e) {
+      try {
+        localStorage.setItem(KEY + ".bak", localStorage.getItem(KEY) || "");
+      } catch (_) {}
+      notice("Saved data looked corrupt, so we started fresh. A backup was kept.");
+    }
+  }
+
+  function save() {
+    if (!storageOK) return;
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (e) {
+      storageOK = false;
+      notice("Couldn't save — check your browser's storage settings. The app still works for this session.");
+    }
+  }
+
+  function todayEntries() {
+    var k = todayKey();
+    if (!state.days[k]) state.days[k] = [];
+    return state.days[k];
+  }
+
+  function dayTotal(k) {
+    return (state.days[k] || []).reduce(function (s, e) { return s + e.grams; }, 0);
+  }
+
+  function recents() {
+    var seen = {}, out = [];
+    var all = [];
+    Object.keys(state.days).forEach(function (k) {
+      (state.days[k] || []).forEach(function (e) { all.push(e); });
+    });
+    all.sort(function (a, b) { return b.ts - a.ts; });
+    all.forEach(function (e) {
+      var key = e.name.trim().toLowerCase();
+      if (!seen[key]) { seen[key] = true; out.push(e); }
+    });
+    return out.slice(0, 12);
+  }
+
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function render() {
+    var k = todayKey();
+    var entries = todayEntries();
+    var total = dayTotal(k);
+
+    document.getElementById("date").textContent = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    document.getElementById("total").textContent = Math.round(total * 10) / 10;
+    document.getElementById("goalDisplay").textContent = state.goal;
+    document.getElementById("goalVal").textContent = state.goal;
+
+    var pct = state.goal > 0 ? Math.min(100, (total / state.goal) * 100) : 0;
+    document.getElementById("barFill").style.width = pct + "%";
+    document.getElementById("bar").classList.toggle("done", state.goal > 0 && total >= state.goal);
+
+    // Today's log
+    var log = document.getElementById("todayLog");
+    if (!entries.length) {
+      log.innerHTML = '<div class="hint">Nothing logged yet — add your first meal above.</div>';
+    } else {
+      log.innerHTML = entries.map(function (e, i) {
+        return '<div class="entry"><span>' + esc(e.name) +
+          (e.lactose ? '<span class="badge">⚠️ lactose</span>' : '') +
+          '</span><span><span class="grams">' + e.grams + 'g</span>' +
+          '<button class="del" data-i="' + i + '" aria-label="delete">×</button></span></div>';
+      }).join("");
+      log.querySelectorAll(".del").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          todayEntries().splice(parseInt(btn.getAttribute("data-i"), 10), 1);
+          save(); render();
+        });
+      });
+    }
+
+    // Recents
+    var rc = recents(), chips = document.getElementById("recents");
+    if (!rc.length) {
+      chips.innerHTML = '<div class="hint">Foods you log will show up here for one-tap re-adding.</div>';
+    } else {
+      chips.innerHTML = "";
+      rc.forEach(function (e) {
+        var b = document.createElement("button");
+        b.className = "chip";
+        b.innerHTML = esc(e.name) + ' <small>' + e.grams + 'g</small>' + (e.lactose ? ' ⚠️' : '');
+        b.addEventListener("click", function () {
+          addEntry(e.name, e.grams, e.lactose);
+        });
+        chips.appendChild(b);
+      });
+    }
+
+    // History (past days, newest first)
+    var hist = document.getElementById("history");
+    var keys = Object.keys(state.days).filter(function (x) { return x !== k && state.days[x].length; }).sort().reverse();
+    if (!keys.length) {
+      hist.innerHTML = '<div class="hint">Past days will appear here.</div>';
+    } else {
+      hist.innerHTML = keys.map(function (dk) {
+        var items = state.days[dk].map(function (e) {
+          return '<div class="entry"><span>' + esc(e.name) +
+            (e.lactose ? '<span class="badge">⚠️ lactose</span>' : '') +
+            '</span><span class="grams">' + e.grams + 'g</span></div>';
+        }).join("");
+        var dstr = new Date(dk + "T12:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+        return '<details><summary><span>' + esc(dstr) + '</span><span class="day-total">' +
+          (Math.round(dayTotal(dk) * 10) / 10) + 'g</span></summary>' + items + '</details>';
+      }).join("");
+    }
+  }
+
+  function addEntry(name, grams, lactose) {
+    var err = document.getElementById("error");
+    name = String(name || "").trim();
+    grams = parseFloat(grams);
+    if (!name) { err.textContent = "Give the food a name."; return false; }
+    if (!(grams > 0)) { err.textContent = "Protein grams must be a positive number."; return false; }
+    err.textContent = "";
+    todayEntries().push({ name: name, grams: Math.round(grams * 10) / 10, lactose: !!lactose, ts: Date.now() });
+    save(); render();
+    return true;
+  }
+
+  document.getElementById("addBtn").addEventListener("click", function () {
+    var ok = addEntry(
+      document.getElementById("foodName").value,
+      document.getElementById("foodGrams").value,
+      document.getElementById("foodLactose").checked
+    );
+    if (ok) {
+      document.getElementById("foodName").value = "";
+      document.getElementById("foodGrams").value = "";
+      document.getElementById("foodLactose").checked = false;
+      document.getElementById("foodName").focus();
+    }
+  });
+
+  ["foodName", "foodGrams"].forEach(function (id) {
+    document.getElementById(id).addEventListener("keydown", function (e) {
+      if (e.key === "Enter") document.getElementById("addBtn").click();
+    });
+  });
+
+  document.getElementById("editGoal").addEventListener("click", function () {
+    document.getElementById("goalView").style.display = "none";
+    document.getElementById("goalEdit").style.display = "inline";
+    var inp = document.getElementById("goalInput");
+    inp.value = state.goal; inp.focus(); inp.select();
+  });
+  document.getElementById("saveGoal").addEventListener("click", function () {
+    var v = parseFloat(document.getElementById("goalInput").value);
+    if (v > 0) { state.goal = Math.round(v); save(); }
+    document.getElementById("goalView").style.display = "inline";
+    document.getElementById("goalEdit").style.display = "none";
+    render();
+  });
+
+  // Midnight rollover: re-render at most once a minute if the date changed
+  var lastKey = todayKey();
+  setInterval(function () {
+    if (todayKey() !== lastKey) { lastKey = todayKey(); render(); }
+  }, 60000);
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
